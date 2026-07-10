@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حاسبة المقاسات</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f0a500">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حاسبة المقاسات">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f12;
+    --surface: #1a1a22;
+    --surface2: #23232f;
+    --accent: #f0a500;
+    --accent2: #ff6b35;
+    --text: #f0ede8;
+    --muted: #7a7890;
+    --border: #2e2e3e;
+    --success: #4ade80;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(240,165,0,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,107,53,0.06) 0%, transparent 50%);
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 32px rgba(240,165,0,0.3);
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .header p { color: var(--muted); font-size: 14px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    transition: border-color 0.2s;
+    outline: none;
+    text-align: right;
+  }
+
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--muted); font-weight: 400; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .darag-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .darag-list:empty { margin-bottom: 0; }
+
+  .darag-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: fadeIn 0.3s ease both;
+  }
+
+  .darag-item-info { font-size: 14px; font-weight: 600; }
+  .darag-item-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .darag-item-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+  .darag-item-delete:hover { color: #ff5252; }
+
+  .add-btn {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px dashed var(--border);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .item-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease both;
+  }
+  .item-card:last-child { margin-bottom: 0; }
+  .item-card .darag-item { background: var(--surface); }
+
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .item-badge {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(240,165,0,0.12);
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  .item-subtotal {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .item-subtotal span.val { color: var(--accent); font-size: 16px; font-weight: 900; }
+
+  .add-item-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .add-item-btn {
+    background: var(--surface2);
+    border: 1.5px dashed var(--border);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 14px 8px;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .add-item-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(240,165,0,0.08); }
+
+  .empty-hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 8px 0 16px;
+  }
+
+  .calc-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: var(--radius);
+    padding: 16px;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 17px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 24px rgba(240,165,0,0.3);
+    letter-spacing: 0.5px;
+  }
+
+  .calc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(240,165,0,0.45);
+  }
+
+  .calc-btn:active { transform: translateY(0); }
+
+  .result {
+    background: linear-gradient(135deg, rgba(240,165,0,0.12), rgba(255,107,53,0.08));
+    border: 1.5px solid rgba(240,165,0,0.35);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .result.show { display: block; }
+
+  .result-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .result-value {
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .result-unit {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .result-details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    text-align: right;
+  }
+
+  .result-item-block { margin-bottom: 16px; }
+  .result-item-block:last-child { margin-bottom: 0; }
+  .result-item-block + .result-item-block {
+    padding-top: 16px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .result-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .result-item-header .item-total { color: var(--accent); font-weight: 900; font-size: 15px; }
+
+  .result-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 8px 0;
+  }
+  .result-row + .result-row { border-top: 1px dashed var(--border); }
+
+  .result-extras {
+    margin-top: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .result-extra-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .result-extra-row span:last-child { color: var(--accent); }
+
+  .result-detail { text-align: center; }
+  .result-detail .val { font-size: 16px; font-weight: 700; color: var(--text); }
+  .result-detail .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 600; }
+
+  .error-msg {
+    color: #ff5252;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    padding: 10px;
+    background: rgba(255,82,82,0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(255,82,82,0.2);
+    margin-top: 12px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div class="logo">🪨</div>
+    <h1>حاسبة المقاسات</h1>
+    <p>احسب سعر الأرضية بسرعة ودقة</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">بنود الحساب</div>
+    <div id="itemsContainer"></div>
+    <div id="emptyHint" class="empty-hint">لا يوجد بنود بعد، ابدأ بإضافة بند</div>
+    <div class="add-item-row">
+      <button class="add-item-btn" onclick="addItem('area')">📐 بند مساحة</button>
+      <button class="add-item-btn" onclick="addItem('darag')">🪜 بند درج</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">إضافات</div>
+    <div id="extrasContainer"></div>
+    <button class="add-btn" onclick="addExtraRow()">＋ إضافة عنصر</button>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">احسب السعر الإجمالي</button>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="result" id="result">
+    <div class="result-label">السعر الإجمالي</div>
+    <div class="result-value" id="resultValue">0</div>
+    <div class="result-unit">جنيه مصري</div>
+    <div class="result-details" id="resultDetails"></div>
+  </div>
+
+</div>
+
+<script>
+let items = [];
+let itemIdCounter = 0;
+let extraRowCount = 0;
+
+function addItem(type) {
+  itemIdCounter++;
+  const item = { id: itemIdCounter, type, price: 0, sizes: [] };
+  items.push(item);
+  renderItemCard(item);
+  document.getElementById('emptyHint').style.display = 'none';
+  hideResult();
+  hideError();
+}
+
+function removeItem(id) {
+  items = items.filter(it => it.id !== id);
+  const el = document.getElementById('item-' + id);
+  if (el) el.remove();
+  if (items.length === 0) document.getElementById('emptyHint').style.display = 'block';
+  hideResult();
+}
+
+function getItem(id) {
+  return items.find(it => it.id === id);
+}
+
+function renderItemCard(item) {
+  const container = document.getElementById('itemsContainer');
+  const el = document.createElement('div');
+  el.className = 'item-card';
+  el.id = 'item-' + item.id;
+
+  const isArea = item.type === 'area';
+  const badge = isArea ? '📐 مساحة عادية' : '🪜 درج';
+  const priceLabel = isArea ? 'سعر المتر المربع (جنيه)' : 'سعر المتر الطولي (جنيه)';
+
+  const enterHandler = `if(event.key==='Enter'){event.preventDefault(); addSize(${item.id});}`;
+
+  const sizeFieldsHtml = isArea ? `
+    <div class="row">
+      <div class="field">
+        <label>وزرة وحبسة - طول (سم)</label>
+        <input type="number" id="item-${item.id}-addLength" placeholder="0" onkeydown="${enterHandler}">
+      </div>
+      <div class="field">
+        <label>وزرة وحبسة - عرض (سم)</label>
+        <input type="number" id="item-${item.id}-addWidth" placeholder="0" onkeydown="${enterHandler}">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>الطول (سم)</label>
+        <input type="number" id="item-${item.id}-length" placeholder="مثال: 400" onkeydown="${enterHandler}">
+      </div>
+      <div class="field">
+        <label>العرض (سم)</label>
+        <input type="number" id="item-${item.id}-width" placeholder="مثال: 300" onkeydown="${enterHandler}">
+      </div>
+    </div>
+    <div class="field">
+      <label>الكمية</label>
+      <input type="number" id="item-${item.id}-qty" placeholder="مثال: 1" onkeydown="${enterHandler}">
+    </div>
+  ` : `
+    <div class="row">
+      <div class="field">
+        <label>العدد</label>
+        <input type="number" id="item-${item.id}-n" placeholder="مثال: 15" onkeydown="${enterHandler}">
+      </div>
+      <div class="field">
+        <label>الطول (سم)</label>
+        <input type="number" id="item-${item.id}-l" placeholder="مثال: 30" onkeydown="${enterHandler}">
+      </div>
+    </div>
+  `;
+
+  el.innerHTML = `
+    <div class="item-header">
+      <span class="item-badge">${badge}</span>
+      <button class="darag-item-delete" onclick="removeItem(${item.id})">×</button>
+    </div>
+    <div class="field">
+      <label>${priceLabel}</label>
+      <input type="number" id="item-${item.id}-price" placeholder="مثال: 250" oninput="updateItemPrice(${item.id}, this.value)">
+    </div>
+    <div id="item-${item.id}-sizes" class="darag-list"></div>
+    ${sizeFieldsHtml}
+    <button class="add-btn" onclick="addSize(${item.id})">＋ إضافة مقاس لهذا البند</button>
+    <div class="item-subtotal">
+      <span>إجمالي البند</span>
+      <span class="val" id="item-${item.id}-subtotal">0.00 ج</span>
+    </div>
+  `;
+  container.appendChild(el);
+}
+
+function updateItemPrice(id, val) {
+  const item = getItem(id);
+  if (!item) return;
+  item.price = parseFloat(val) || 0;
+  updateItemSubtotalDisplay(id);
+}
+
+function addSize(id) {
+  const item = getItem(id);
+  if (!item) return;
+
+  if (item.type === 'area') {
+    const addL = parseFloat(document.getElementById(`item-${id}-addLength`).value) || 0;
+    const addW = parseFloat(document.getElementById(`item-${id}-addWidth`).value) || 0;
+    const l = parseFloat(document.getElementById(`item-${id}-length`).value);
+    const w = parseFloat(document.getElementById(`item-${id}-width`).value);
+    const qty = parseFloat(document.getElementById(`item-${id}-qty`).value) || 1;
+
+    if (!l || !w || l <= 0 || w <= 0) {
+      showError('ادخل الطول والعرض بشكل صحيح');
+      return;
+    }
+    if (qty <= 0) {
+      showError('ادخل كمية صحيحة');
+      return;
+    }
+    hideError();
+    const effL = l + addL;
+    const effW = w + addW;
+    const sqm = ((effL * effW) / 10000) * qty;
+    item.sizes.push({ l, w, addL, addW, qty, sqm });
+
+    document.getElementById(`item-${id}-length`).value = '';
+    document.getElementById(`item-${id}-width`).value = '';
+    document.getElementById(`item-${id}-addLength`).value = '';
+    document.getElementById(`item-${id}-addWidth`).value = '';
+    document.getElementById(`item-${id}-qty`).value = '';
+    document.getElementById(`item-${id}-addLength`).focus();
+  } else {
+    const n = parseFloat(document.getElementById(`item-${id}-n`).value);
+    const l = parseFloat(document.getElementById(`item-${id}-l`).value);
+    if (!n || !l || n <= 0 || l <= 0) {
+      showError('ادخل العدد والطول بشكل صحيح');
+      return;
+    }
+    hideError();
+    const meters = (n * l) / 100;
+    item.sizes.push({ n, l, meters });
+
+    document.getElementById(`item-${id}-n`).value = '';
+    document.getElementById(`item-${id}-l`).value = '';
+    document.getElementById(`item-${id}-n`).focus();
+  }
+
+  renderSizesList(id);
+  updateItemSubtotalDisplay(id);
+}
+
+function removeSize(id, idx) {
+  const item = getItem(id);
+  if (!item) return;
+  item.sizes.splice(idx, 1);
+  renderSizesList(id);
+  updateItemSubtotalDisplay(id);
+}
+
+function renderSizesList(id) {
+  const item = getItem(id);
+  const list = document.getElementById(`item-${id}-sizes`);
+  list.innerHTML = '';
+  item.sizes.forEach((s, i) => {
+    const elDiv = document.createElement('div');
+    elDiv.className = 'darag-item';
+    if (item.type === 'area') {
+      const addNote = (s.addL || s.addW) ? ` (+${s.addL || 0} / +${s.addW || 0})` : '';
+      const qtyPrefix = s.qty > 1 ? `${s.qty} - ` : '';
+      elDiv.innerHTML = `
+        <div>
+          <div class="darag-item-info">${qtyPrefix}${s.l} × ${s.w} سم${addNote}</div>
+          <div class="darag-item-sub">${s.sqm.toFixed(2)} م²</div>
+        </div>
+        <button class="darag-item-delete" onclick="removeSize(${id}, ${i})">×</button>
+      `;
+    } else {
+      elDiv.innerHTML = `
+        <div>
+          <div class="darag-item-info">${s.n} قطعة × ${s.l} سم</div>
+          <div class="darag-item-sub">${s.meters.toFixed(2)} متر</div>
+        </div>
+        <button class="darag-item-delete" onclick="removeSize(${id}, ${i})">×</button>
+      `;
+    }
+    list.appendChild(elDiv);
+  });
+}
+
+function getItemQty(item) {
+  if (item.type === 'area') return item.sizes.reduce((s, it) => s + it.sqm, 0);
+  return item.sizes.reduce((s, it) => s + it.meters, 0);
+}
+
+function getItemTotal(item) {
+  return getItemQty(item) * (item.price || 0);
+}
+
+function updateItemSubtotalDisplay(id) {
+  const item = getItem(id);
+  const el = document.getElementById(`item-${id}-subtotal`);
+  if (el) el.textContent = getItemTotal(item).toLocaleString('ar-EG', { maximumFractionDigits: 2 }) + ' ج';
+}
+
+function addExtraRow() {
+  extraRowCount++;
+  const id = 'extraRow' + extraRowCount;
+  const container = document.getElementById('extrasContainer');
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.id = id;
+  row.style.marginBottom = '12px';
+  row.style.gridTemplateColumns = '1fr 1fr auto';
+  row.style.alignItems = 'center';
+  row.innerHTML = `
+    <div class="field" style="margin-bottom:0">
+      <input type="text" class="extra-name" placeholder="اسم الإضافة">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <input type="number" class="extra-price" placeholder="السعر">
+    </div>
+    <button class="darag-item-delete" onclick="removeExtraRow('${id}')">×</button>
+  `;
+  container.appendChild(row);
+}
+
+function removeExtraRow(id) {
+  const row = document.getElementById(id);
+  if (row) row.remove();
+}
+
+function getExtras() {
+  const names = document.querySelectorAll('.extra-name');
+  const prices = document.querySelectorAll('.extra-price');
+  const list = [];
+  let total = 0;
+  for (let i = 0; i < prices.length; i++) {
+    const price = parseFloat(prices[i].value) || 0;
+    if (price > 0) {
+      const name = names[i].value.trim() || 'إضافة';
+      list.push({ name, price });
+      total += price;
+    }
+  }
+  return { items: list, total };
+}
+
+function calculate() {
+  hideResult();
+  hideError();
+
+  if (items.length === 0) {
+    showError('أضف بند واحد على الأقل');
+    return;
+  }
+
+  for (const item of items) {
+    if (item.sizes.length === 0) {
+      showError('أضف مقاس واحد على الأقل لكل بند');
+      return;
+    }
+    if (!item.price || item.price <= 0) {
+      showError('من فضلك ادخل سعر المتر لكل بند');
+      return;
+    }
+  }
+
+  const extras = getExtras();
+  const itemsTotal = items.reduce((s, it) => s + getItemTotal(it), 0);
+  const grandTotal = itemsTotal + extras.total;
+
+  showResult(grandTotal, items, extras.items);
+}
+
+function showResult(total, itemsList, extraItems) {
+  document.getElementById('resultValue').textContent = total.toLocaleString('ar-EG', { maximumFractionDigits: 2 });
+  const detailsEl = document.getElementById('resultDetails');
+
+  let html = itemsList.map(item => {
+    const isArea = item.type === 'area';
+    const badge = isArea ? '📐 مساحة عادية' : '🪜 درج';
+    const itemTotal = getItemTotal(item);
+    const rows = item.sizes.map(s => {
+      if (isArea) {
+        const qtyPrefix = s.qty > 1 ? `${s.qty} - ` : '';
+        return [
+          { val: qtyPrefix + s.l + '×' + s.w + ' سم', lbl: 'المقاس' },
+          { val: s.sqm.toFixed(2) + 'م²', lbl: 'المساحة' },
+        ];
+      }
+      return [
+        { val: s.n + ' × ' + s.l + ' سم', lbl: 'البند' },
+        { val: s.meters.toFixed(2) + 'م', lbl: 'الطول' },
+      ];
+    });
+    const rowsHtml = rows.map(row => `
+      <div class="result-row">
+        ${row.map(d => `<div class="result-detail"><div class="val">${d.val}</div><div class="lbl">${d.lbl}</div></div>`).join('')}
+      </div>
+    `).join('');
+    return `
+      <div class="result-item-block">
+        <div class="result-item-header">
+          <span>${badge} — سعر المتر ${item.price} ج</span>
+          <span class="item-total">${itemTotal.toLocaleString('ar-EG', { maximumFractionDigits: 2 })} ج</span>
+        </div>
+        <div class="result-item-rows">${rowsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  if (extraItems.length > 0) {
+    html += `<div class="result-extras">` +
+      extraItems.map(ex => `<div class="result-extra-row"><span>${ex.name}</span><span>${ex.price.toLocaleString('ar-EG')} ج</span></div>`).join('') +
+      `</div>`;
+  }
+
+  detailsEl.innerHTML = html;
+  const r = document.getElementById('result');
+  r.classList.remove('show');
+  setTimeout(() => r.classList.add('show'), 10);
+}
+
+function hideResult() {
+  document.getElementById('result').classList.remove('show');
+}
+
+function showError(msg) {
+  const e = document.getElementById('errorMsg');
+  e.textContent = msg;
+  e.classList.add('show');
+}
+
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('show');
+}
+
+addItem('area');
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((err) => {
+        console.error('Service worker registration failed:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
